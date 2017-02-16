@@ -54,6 +54,7 @@
 /// TF
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
+#include "ur_modern_driver/TransformRTStamped.h"
 
 class RosWrapper {
 protected:
@@ -75,8 +76,8 @@ protected:
 	double io_flag_delay_;
 	double max_velocity_;
 	std::vector<double> joint_offsets_;
-    std::string base_frame_;
-    std::string tool_frame_;
+	std::string base_frame_;
+	std::string tool_frame_;
 	bool use_ros_control_;
 	std::thread* ros_control_thread_;
 	boost::shared_ptr<ros_control_ur::UrHardwareInterface> hardware_interface_;
@@ -95,11 +96,11 @@ public:
 		char buf[256];
 
 		if (ros::param::get("~prefix", joint_prefix)) {
-		    if (joint_prefix.length() > 0) {
-    			sprintf(buf, "Setting prefix to %s", joint_prefix.c_str());
-	    		print_info(buf);
-	        }	
-        }
+			if (joint_prefix.length() > 0) {
+				sprintf(buf, "Setting prefix to %s", joint_prefix.c_str());
+				print_info(buf);
+			}
+		}
 		joint_names.push_back(joint_prefix + "shoulder_pan_joint");
 		joint_names.push_back(joint_prefix + "shoulder_lift_joint");
 		joint_names.push_back(joint_prefix + "elbow_joint");
@@ -173,17 +174,17 @@ public:
 		}
 		robot_.setServojGain(servoj_gain);
 
-        //Base and tool frames
-        base_frame_ = joint_prefix + "base_link";
-        tool_frame_ =  joint_prefix + "tool0_controller";
-        if (ros::param::get("~base_frame", base_frame_)) {
-            sprintf(buf, "Base frame set to: %s", base_frame_.c_str());
-            print_debug(buf);
-        }
-        if (ros::param::get("~tool_frame", tool_frame_)) {
-            sprintf(buf, "Tool frame set to: %s", tool_frame_.c_str());
-            print_debug(buf);
-        }
+		//Base and tool frames
+		base_frame_ = joint_prefix + "base_link";
+		tool_frame_ =  joint_prefix + "tool0_controller";
+		if (ros::param::get("~base_frame", base_frame_)) {
+			sprintf(buf, "Base frame set to: %s", base_frame_.c_str());
+			print_debug(buf);
+		}
+		if (ros::param::get("~tool_frame", tool_frame_)) {
+			sprintf(buf, "Tool frame set to: %s", tool_frame_.c_str());
+			print_debug(buf);
+		}
 
 		if (robot_.start()) {
 			if (use_ros_control_) {
@@ -315,7 +316,7 @@ private:
 			print_error(result_.error_string);
 			return;
 		}
-        
+
 		if (!has_velocities()) {
 			result_.error_code = result_.INVALID_GOAL;
 			result_.error_string = "Received a goal without velocities";
@@ -343,7 +344,7 @@ private:
 		}
 
 		reorder_traj_joints(goal.trajectory);
-		
+
 		if (!start_positions_match(goal.trajectory, 0.01)) {
 			result_.error_code = result_.INVALID_GOAL;
 			result_.error_string = "Goal start doesn't match current pose";
@@ -609,7 +610,7 @@ private:
 
 			// Broadcast transform
 			if( tf_pub.trylock() )
-			{			
+			{
 				tf_pub.msg_.transforms[0].header.stamp = ros_time;
 				if (angle < 1e-16) {
 					tf_pub.msg_.transforms[0].transform.rotation.x = 0;
@@ -633,7 +634,7 @@ private:
 			std::vector<double> tcp_speed = robot_.rt_interface_->robot_state_->getTcpSpeedActual();
 
 			if( tool_vel_pub.trylock() )
-			{			
+			{
 				tool_vel_pub.msg_.header.stamp = ros_time;
 				tool_vel_pub.msg_.twist.linear.x = tcp_speed[0];
 				tool_vel_pub.msg_.twist.linear.y = tcp_speed[1];
@@ -653,13 +654,15 @@ private:
 				"joint_states", 1);
 		ros::Publisher wrench_pub = nh_.advertise<geometry_msgs::WrenchStamped>(
 				"wrench", 1);
-        ros::Publisher tool_vel_pub = nh_.advertise<geometry_msgs::TwistStamped>("tool_velocity", 1);
-        static tf::TransformBroadcaster br;
+		ros::Publisher rt_tf_pub = nh_.advertise<ur_modern_driver::TransformRTStamped>(
+				"rt_tf", 1);
+		ros::Publisher tool_vel_pub = nh_.advertise<geometry_msgs::TwistStamped>("tool_velocity", 1);
+		static tf::TransformBroadcaster br;
 		while (ros::ok()) {
 			sensor_msgs::JointState joint_msg;
 			joint_msg.name = robot_.getJointNames();
 			geometry_msgs::WrenchStamped wrench_msg;
-            geometry_msgs::PoseStamped tool_pose_msg;
+			geometry_msgs::PoseStamped tool_pose_msg;
 			std::mutex msg_lock; // The values are locked for reading in the class, so just use a dummy mutex
 			std::unique_lock<std::mutex> locker(msg_lock);
 			while (!robot_.rt_interface_->robot_state_->getDataPublished()) {
@@ -686,40 +689,50 @@ private:
 			wrench_msg.wrench.torque.z = tcp_force[5];
 			wrench_pub.publish(wrench_msg);
 
-            // Tool vector: Actual Cartesian coordinates of the tool: (x,y,z,rx,ry,rz), where rx, ry and rz is a rotation vector representation of the tool orientation
-            std::vector<double> tool_vector_actual = robot_.rt_interface_->robot_state_->getToolVectorActual();
+			// Tool vector: Actual Cartesian coordinates of the tool: (x,y,z,rx,ry,rz), where rx, ry and rz is a rotation vector representation of the tool orientation
+			std::vector<double> tool_vector_actual = robot_.rt_interface_->robot_state_->getToolVectorActual();
 
-            //Create quaternion
-            tf::Quaternion quat;
-            double rx = tool_vector_actual[3];
-            double ry = tool_vector_actual[4];
-            double rz = tool_vector_actual[5];
-            double angle = std::sqrt(std::pow(rx,2) + std::pow(ry,2) + std::pow(rz,2));
-            if (angle < 1e-16) {
-                quat.setValue(0, 0, 0, 1);
-            } else {
-                quat.setRotation(tf::Vector3(rx/angle, ry/angle, rz/angle), angle);
-            }
+			//Create quaternion
+			tf::Quaternion quat;
+			double rx = tool_vector_actual[3];
+			double ry = tool_vector_actual[4];
+			double rz = tool_vector_actual[5];
+			double angle = std::sqrt(std::pow(rx,2) + std::pow(ry,2) + std::pow(rz,2));
+			if (angle < 1e-16) {
+				quat.setValue(0, 0, 0, 1);
+			} else {
+				quat.setRotation(tf::Vector3(rx/angle, ry/angle, rz/angle), angle);
+			}
 
-            //Create and broadcast transform
-            tf::Transform transform;
-            transform.setOrigin(tf::Vector3(tool_vector_actual[0], tool_vector_actual[1], tool_vector_actual[2]));
-            transform.setRotation(quat);
-            br.sendTransform(tf::StampedTransform(transform, joint_msg.header.stamp, base_frame_, tool_frame_));
+			//Create and broadcast transform
+			tf::Transform transform;
+			transform.setOrigin(tf::Vector3(tool_vector_actual[0], tool_vector_actual[1], tool_vector_actual[2]));
+			transform.setRotation(quat);
+			geometry_msgs::TransformStamped msgtf;
+			transformStampedTFToMsg(tf::StampedTransform(transform, joint_msg.header.stamp, base_frame_, tool_frame_), msgtf);
+			br.sendTransform(msgtf);
 
-            //Publish tool velocity
-            std::vector<double> tcp_speed =
-                    robot_.rt_interface_->robot_state_->getTcpSpeedActual();
-            geometry_msgs::TwistStamped tool_twist;
-            tool_twist.header.frame_id = base_frame_;
-            tool_twist.header.stamp = joint_msg.header.stamp;
-            tool_twist.twist.linear.x = tcp_speed[0];
-            tool_twist.twist.linear.y = tcp_speed[1];
-            tool_twist.twist.linear.z = tcp_speed[2];
-            tool_twist.twist.angular.x = tcp_speed[3];
-            tool_twist.twist.angular.y = tcp_speed[4];
-            tool_twist.twist.angular.z = tcp_speed[5];
-            tool_vel_pub.publish(tool_twist);
+			// RT TF publish
+			ur_modern_driver::TransformRTStamped rt_tf_msg;
+			double sec;
+			rt_tf_msg.rt_stamp.nsec = 1e9 * modf(robot_.rt_interface_->robot_state_->getTime(), &sec);
+			rt_tf_msg.rt_stamp.sec = sec;
+			rt_tf_msg.transform_stamped = msgtf;
+			rt_tf_pub.publish(rt_tf_msg);
+
+			//Publish tool velocity
+			std::vector<double> tcp_speed =
+					robot_.rt_interface_->robot_state_->getTcpSpeedActual();
+			geometry_msgs::TwistStamped tool_twist;
+			tool_twist.header.frame_id = base_frame_;
+			tool_twist.header.stamp = joint_msg.header.stamp;
+			tool_twist.twist.linear.x = tcp_speed[0];
+			tool_twist.twist.linear.y = tcp_speed[1];
+			tool_twist.twist.linear.z = tcp_speed[2];
+			tool_twist.twist.angular.x = tcp_speed[3];
+			tool_twist.twist.angular.y = tcp_speed[4];
+			tool_twist.twist.angular.z = tcp_speed[5];
+			tool_vel_pub.publish(tool_twist);
 
 			robot_.rt_interface_->robot_state_->setDataPublished();
 		}
