@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   trajectory_msgs
   ur_msgs
+  rt_msgs
   tf
 )
 
@@ -52,12 +53,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  DIRECTORY
-	msg
-  FILES
-	TransformRTStamped.msg
-  )
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -78,7 +77,6 @@ add_message_files(
 #   DEPENDENCIES
 #   control_msgs#   geometry_msgs#   sensor_msgs#   trajectory_msgs#   ur_msgs
 # )
-generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -112,7 +110,7 @@ generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES ur_modern_driver
-  CATKIN_DEPENDS hardware_interface controller_manager actionlib control_msgs geometry_msgs roscpp sensor_msgs trajectory_msgs ur_msgs
+  CATKIN_DEPENDS hardware_interface controller_manager actionlib control_msgs geometry_msgs roscpp sensor_msgs trajectory_msgs ur_msgs rt_msgs
   DEPENDS ur_hardware_interface
 )
 
@@ -125,17 +123,17 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "-std=c++11")
+	set(CMAKE_CXX_FLAGS "-std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "-std=c++0x")
+	set(CMAKE_CXX_FLAGS "-std=c++0x")
 else()
-    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
+	message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
 endif()
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include 
+include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -154,13 +152,13 @@ target_link_libraries(ur_hardware_interface
 
 ## Declare a C++ executable
 set(${PROJECT_NAME}_SOURCES
-    src/ur_ros_wrapper.cpp
-    src/ur_driver.cpp
-    src/ur_realtime_communication.cpp
-    src/ur_communication.cpp
-    src/robot_state.cpp
-    src/robot_state_RT.cpp
-    src/do_output.cpp)
+	src/ur_ros_wrapper.cpp
+	src/ur_driver.cpp
+	src/ur_realtime_communication.cpp
+	src/ur_communication.cpp
+	src/robot_state.cpp
+	src/robot_state_RT.cpp
+	src/do_output.cpp)
 add_executable(ur_driver ${${PROJECT_NAME}_SOURCES})
 
 ## Add cmake target dependencies of the executable
@@ -176,7 +174,6 @@ target_link_libraries(ur_driver
 #############
 ## Install ##
 #############
-
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
 
 ## Mark executables and/or libraries for installation
