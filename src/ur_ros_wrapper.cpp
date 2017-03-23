@@ -569,6 +569,7 @@ private:
 		static const double BILLION = 1000000000.0;
 
 		realtime_tools::RealtimePublisher<tf::tfMessage> tf_pub( nh_, "/tf", 1 );
+		realtime_tools::RealtimePublisher<rt_msgs::TransformRTStamped> rt_tf_pub( nh_, "/ur_rt_tf", 1 );
 		geometry_msgs::TransformStamped tool_transform;
 		tool_transform.header.frame_id = base_frame_;
 		tool_transform.child_frame_id = tool_frame_;
@@ -602,11 +603,18 @@ private:
 			// Tool vector: Actual Cartesian coordinates of the tool: (x,y,z,rx,ry,rz), where rx, ry and rz is a rotation vector representation of the tool orientation
 			std::vector<double> tool_vector_actual = robot_.rt_interface_->robot_state_->getToolVectorActual();
 
+			double sec;
+			double nsec = 1e9 * std::modf(robot_.rt_interface_->robot_state_->getTime(), &sec);
+
 			// Compute rotation angle
 			double rx = tool_vector_actual[3];
 			double ry = tool_vector_actual[4];
 			double rz = tool_vector_actual[5];
 			double angle = std::sqrt(std::pow(rx,2) + std::pow(ry,2) + std::pow(rz,2));
+			double qx = (rx/angle) * std::sin(angle*0.5);
+			double qy = (ry/angle) * std::sin(angle*0.5);
+			double qz = (rz/angle) * std::sin(angle*0.5);
+			double qw = std::cos(angle*0.5);
 
 			// Broadcast transform
 			if( tf_pub.trylock() )
@@ -618,10 +626,10 @@ private:
 					tf_pub.msg_.transforms[0].transform.rotation.z = 0;
 					tf_pub.msg_.transforms[0].transform.rotation.w = 1;
 				} else {
-					tf_pub.msg_.transforms[0].transform.rotation.x = (rx/angle) * std::sin(angle*0.5);
-					tf_pub.msg_.transforms[0].transform.rotation.y = (ry/angle) * std::sin(angle*0.5);
-					tf_pub.msg_.transforms[0].transform.rotation.z = (rz/angle) * std::sin(angle*0.5);
-					tf_pub.msg_.transforms[0].transform.rotation.w = std::cos(angle*0.5);
+					tf_pub.msg_.transforms[0].transform.rotation.x = qx;
+					tf_pub.msg_.transforms[0].transform.rotation.y = qy;
+					tf_pub.msg_.transforms[0].transform.rotation.z = qz;
+					tf_pub.msg_.transforms[0].transform.rotation.w = qw;
 				}
 				tf_pub.msg_.transforms[0].transform.translation.x = tool_vector_actual[0];
 				tf_pub.msg_.transforms[0].transform.translation.y = tool_vector_actual[1];
@@ -630,6 +638,30 @@ private:
 				tf_pub.unlockAndPublish();
 			}
 
+			// RT TF publish
+
+			if( rt_tf_pub.trylock() )
+			{
+				rt_tf_pub.msg_.transform_stamped.header.stamp = ros_time;
+				rt_tf_pub.msg_.rt_stamp.nsec = nsec;
+				rt_tf_pub.msg_.rt_stamp.sec = sec;
+				if (angle < 1e-16) {
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.x = 0;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.y = 0;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.z = 0;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.w = 1;
+				} else {
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.x = qx;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.y = qy;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.z = qz;
+					rt_tf_pub.msg_.transform_stamped.transform.rotation.w = qw;
+				}
+				rt_tf_pub.msg_.transform_stamped.transform.translation.x = tool_vector_actual[0];
+				rt_tf_pub.msg_.transform_stamped.transform.translation.y = tool_vector_actual[1];
+				rt_tf_pub.msg_.transform_stamped.transform.translation.z = tool_vector_actual[2];
+
+				rt_tf_pub.unlockAndPublish();
+			}
 			//Publish tool velocity
 			std::vector<double> tcp_speed = robot_.rt_interface_->robot_state_->getTcpSpeedActual();
 
