@@ -192,6 +192,7 @@ def main():
         parameters = rospy.get_param(None)
         index = str(parameters).find('prefix')
         headTrajMatFile = rospy.get_param('~head_traj_mat_file','/home/omer/Repositories/Kinect/matlab/TMS/headTrajSystematic.mat')
+        ask_first = rospy.get_param('~ask_first',True)
         useCtrlMaster = rospy.get_param('~use_ctrl_master',False)
         ip_ctrlMaster = rospy.get_param('~ip_ctrl_master')
         port_ctrlMaster = rospy.get_param('~port_ctrl_master',2525)
@@ -215,8 +216,12 @@ def main():
         print str([Q1[i]*180./pi for i in xrange(0,6)])
         print str([Q2[i]*180./pi for i in xrange(0,6)])
         print str([Q3[i]*180./pi for i in xrange(0,6)])
-        print "Please make sure that your robot can move freely between these poses before proceeding!"
-        inp = 'y'#raw_input("Continue? y/n: ")[0]
+        if (ask_first):
+            print "Please make sure that your robot can move freely between these poses before proceeding!"
+            inp = raw_input("Continue? y/n: ")[0]
+        else:
+            inp = 'y'
+        #
         if (inp == 'y'):
             for c in range(numCases):
                 t0 = time.time()
