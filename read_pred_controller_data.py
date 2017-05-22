@@ -82,7 +82,7 @@ def read_tf(tf, child_frame):
     cam_tf = np.swapaxes(np.swapaxes(cam_tf, 0, 2), 0, 1)
     return cam_ros_ts, cam_tf
 
-dataFolder = '/data/firstTry/'
+dataFolder = '/data/'
 allBagFiles = glob.glob(dataFolder+"*.bag")
 
 for bagFileName in allBagFiles:
