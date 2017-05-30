@@ -96,6 +96,7 @@ for bagFileName in allBagFiles:
             os.makedirs(csvFolder)
         cam_tf[0:3, 3, :] = cam_tf[0:3, 3, :] * 1000
         ctf = cam_tf[0:3, :, :].reshape((1, 12, cam_tf.shape[2])).squeeze()
+        ctf = np.vstack([ctf, cam_dev_ts, cam_ros_ts])
         np.savetxt(csvFolder+"tracker_headband.csv", ctf.T, delimiter=",")
         # coil poses from camera
         trk_rt_tf = bag.read_messages('/trk_rt_tf')
@@ -103,6 +104,7 @@ for bagFileName in allBagFiles:
         if cam_tf.size != 0:
             cam_tf[0:3, 3, :] = cam_tf[0:3, 3, :] * 1000
             ctf = cam_tf[0:3, :, :].reshape((1, 12, cam_tf.shape[2])).squeeze()
+            ctf = np.vstack([ctf, cam_dev_ts, cam_ros_ts])
             np.savetxt(csvFolder+"tracker_styluswhite.csv", ctf.T, delimiter=",")
         # robot poses
         trk_rt_tf = bag.read_messages('/ur_rt_tf')
@@ -110,4 +112,5 @@ for bagFileName in allBagFiles:
         if cam_tf.size != 0:
             cam_tf[0:3, 3, :] = cam_tf[0:3, 3, :] * 1000
             ctf = cam_tf[0:3, :, :].reshape((1, 12, cam_tf.shape[2])).squeeze()
+            ctf = np.vstack([ctf, cam_dev_ts, cam_ros_ts])
             np.savetxt(csvFolder+"robot.csv", ctf.T, delimiter=",")
