@@ -39,7 +39,8 @@ def read_head_data(headTrajMatFile, speedSc, ang6_offset):
     jjAll[5, :] = jjAll[5, :] - ang6_offset
     # jjAll = jjAll[:,:numSampsToUse]
     # time_intervals = time_intervals[:numSampsToUse-1]*speedSc
-    time_intervals[0, 50:1250] = time_intervals[0, 50:1250] * speedSc
+    #time_intervals[0, 50:1250] = time_intervals[0, 50:1250] * speedSc
+    time_intervals = time_intervals * speedSc
     time_start = np.append([0], time_intervals.cumsum())
 
 def move_head_traj():
