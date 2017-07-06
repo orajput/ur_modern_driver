@@ -134,7 +134,7 @@ endif()
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(include
-  ${catkin_INCLUDE_DIRS}
+	${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -142,7 +142,7 @@ include_directories(include
 # Hardware Interface
 add_library(ur_hardware_interface src/ur_hardware_interface.cpp)
 target_link_libraries(ur_hardware_interface
-  ${catkin_LIBRARIES}
+	${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
@@ -170,6 +170,12 @@ target_link_libraries(ur_driver
   ur_hardware_interface
   ${catkin_LIBRARIES}
  )
+
+# test move
+add_executable(test_move_cpp src/test_move.cpp)
+target_link_libraries(test_move_cpp
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
