@@ -71,7 +71,7 @@ public:
 
     double start_times[2] = {0.0, 1.0};
     double joint_offset[2] = {0.0, dir_offset*0.02};
-    double start_joints[6] = {1.1582108332119967, -1.1427507742263503, 1.158238412906511, -3.0567715694075828, -1.1923775513899795, 0.3263623701627276};
+    double start_joints[6] = {1.079542636871338, -1.2710145155536097, -1.7220404783831995, -1.1891167799579065, 1.6462156772613525, -2.2031338850604456};
     // Trajectory points
     for (size_t ind = 0; ind < 1; ++ind)
     {
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
   RobotArm arm;
   double dir_offset = 1.0;
-  ros::Rate r(0.01); // 1 hz
+  ros::Rate r(1); // 1 hz
   while (ros::ok())
   {
     // Start the trajectory
