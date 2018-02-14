@@ -642,23 +642,23 @@ private:
 
 			if( rt_tf_pub.trylock() )
 			{
-				rt_tf_pub.msg_.transform_stamped.header.stamp = ros_time;
+				rt_tf_pub.msg_.header.stamp = ros_time;
 				rt_tf_pub.msg_.rt_stamp.nsec = nsec;
 				rt_tf_pub.msg_.rt_stamp.sec = sec;
 				if (angle < 1e-16) {
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.x = 0;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.y = 0;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.z = 0;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.w = 1;
+					rt_tf_pub.msg_.transform.rotation.x = 0;
+					rt_tf_pub.msg_.transform.rotation.y = 0;
+					rt_tf_pub.msg_.transform.rotation.z = 0;
+					rt_tf_pub.msg_.transform.rotation.w = 1;
 				} else {
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.x = qx;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.y = qy;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.z = qz;
-					rt_tf_pub.msg_.transform_stamped.transform.rotation.w = qw;
+					rt_tf_pub.msg_.transform.rotation.x = qx;
+					rt_tf_pub.msg_.transform.rotation.y = qy;
+					rt_tf_pub.msg_.transform.rotation.z = qz;
+					rt_tf_pub.msg_.transform.rotation.w = qw;
 				}
-				rt_tf_pub.msg_.transform_stamped.transform.translation.x = tool_vector_actual[0];
-				rt_tf_pub.msg_.transform_stamped.transform.translation.y = tool_vector_actual[1];
-				rt_tf_pub.msg_.transform_stamped.transform.translation.z = tool_vector_actual[2];
+				rt_tf_pub.msg_.transform.translation.x = tool_vector_actual[0];
+				rt_tf_pub.msg_.transform.translation.y = tool_vector_actual[1];
+				rt_tf_pub.msg_.transform.translation.z = tool_vector_actual[2];
 
 				rt_tf_pub.unlockAndPublish();
 			}
@@ -749,7 +749,9 @@ private:
 			double sec;
 			rt_tf_msg.rt_stamp.nsec = 1e9 * std::modf(robot_.rt_interface_->robot_state_->getTime(), &sec);
 			rt_tf_msg.rt_stamp.sec = sec;
-			rt_tf_msg.transform_stamped = msgtf;
+			rt_tf_msg.transform = msgtf.transform;
+			rt_tf_msg.header = msgtf.header;
+			rt_tf_msg.child_frame_id = msgtf.child_frame_id;
 			rt_tf_pub.publish(rt_tf_msg);
 
 			//Publish tool velocity
