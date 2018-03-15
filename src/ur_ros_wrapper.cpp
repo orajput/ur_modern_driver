@@ -54,7 +54,7 @@
 /// TF
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
-#include "rt_msgs/TransformRTStamped.h"
+#include "rt_msgs/TransformRTStampedWithHeader.h"
 
 class RosWrapper {
 protected:
@@ -569,7 +569,7 @@ private:
 		static const double BILLION = 1000000000.0;
 
 		realtime_tools::RealtimePublisher<tf::tfMessage> tf_pub( nh_, "/tf", 1 );
-		realtime_tools::RealtimePublisher<rt_msgs::TransformRTStamped> rt_tf_pub( nh_, "/ur_rt_tf", 1 );
+		realtime_tools::RealtimePublisher<rt_msgs::TransformRTStampedWithHeader> rt_tf_pub( nh_, "/ur_rt_tf", 1 );
 		geometry_msgs::TransformStamped tool_transform;
 		tool_transform.header.frame_id = base_frame_;
 		tool_transform.child_frame_id = tool_frame_;
@@ -686,7 +686,7 @@ private:
 				"joint_states", 1);
 		ros::Publisher wrench_pub = nh_.advertise<geometry_msgs::WrenchStamped>(
 				"wrench", 1);
-		ros::Publisher rt_tf_pub = nh_.advertise<rt_msgs::TransformRTStamped>(
+		ros::Publisher rt_tf_pub = nh_.advertise<rt_msgs::TransformRTStampedWithHeader>(
 				"ur_rt_tf", 1);
 		ros::Publisher tool_vel_pub = nh_.advertise<geometry_msgs::TwistStamped>("tool_velocity", 1);
 		static tf::TransformBroadcaster br;
@@ -745,7 +745,7 @@ private:
 			br.sendTransform(msgtf);
 
 			// RT TF publish
-			rt_msgs::TransformRTStamped rt_tf_msg;
+		rt_msgs::TransformRTStampedWithHeader rt_tf_msg;
 			double sec;
 			rt_tf_msg.rt_stamp.nsec = 1e9 * std::modf(robot_.rt_interface_->robot_state_->getTime(), &sec);
 			rt_tf_msg.rt_stamp.sec = sec;
