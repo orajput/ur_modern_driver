@@ -56,7 +56,8 @@ find_package(catkin REQUIRED COMPONENTS
 # add_message_files(
 #   FILES
 #   Message1.msg
-#   )
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -123,18 +124,18 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-	set(CMAKE_CXX_FLAGS "-std=c++11")
+    set(CMAKE_CXX_FLAGS "-std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-	set(CMAKE_CXX_FLAGS "-std=c++0x")
+    set(CMAKE_CXX_FLAGS "-std=c++0x")
 else()
-	message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler. Suggested solution: update the pkg build-essential ")
 endif()
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include
-	${catkin_INCLUDE_DIRS}
+include_directories(include 
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -142,7 +143,7 @@ include_directories(include
 # Hardware Interface
 add_library(ur_hardware_interface src/ur_hardware_interface.cpp)
 target_link_libraries(ur_hardware_interface
-	${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the library
@@ -152,13 +153,13 @@ target_link_libraries(ur_hardware_interface
 
 ## Declare a C++ executable
 set(${PROJECT_NAME}_SOURCES
-	src/ur_ros_wrapper.cpp
-	src/ur_driver.cpp
-	src/ur_realtime_communication.cpp
-	src/ur_communication.cpp
-	src/robot_state.cpp
-	src/robot_state_RT.cpp
-	src/do_output.cpp)
+    src/ur_ros_wrapper.cpp
+    src/ur_driver.cpp
+    src/ur_realtime_communication.cpp
+    src/ur_communication.cpp
+    src/robot_state.cpp
+    src/robot_state_RT.cpp
+    src/do_output.cpp)
 add_executable(ur_driver ${${PROJECT_NAME}_SOURCES})
 
 ## Add cmake target dependencies of the executable
@@ -175,12 +176,14 @@ target_link_libraries(ur_driver
 add_executable(test_move_cpp src/test_move.cpp)
 target_link_libraries(test_move_cpp
   ${catkin_LIBRARIES}
-)
+ )
 
 #############
 ## Install ##
 #############
+
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ur_driver ur_hardware_interface
