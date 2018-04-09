@@ -115,13 +115,13 @@ int main(int argc, char** argv)
   // Amount of movement in each joint
   double joint_move_dist = 30.0;
   ros::param::get("~joint_move_dist", joint_move_dist);
-  ROS_INFO_STREAM("joint_move_dist: " << joint_move_dist);
+  ROS_INFO_STREAM("joint_move_dist: " << joint_move_dist << " degrees.");
   joint_move_dist = joint_move_dist*M_PI/180.0; // deg to rad
 
   // Amount of time to complete the movement
   double traj_time = 1.0;
   ros::param::get("~traj_time", traj_time);
-  ROS_INFO_STREAM("traj_time: " << traj_time);
+  ROS_INFO_STREAM("traj_time: " << traj_time << " s.");
 
   RobotArm arm(action_server_name);
   while (ros::ok())
